@@ -1,0 +1,4 @@
+qsnjsclient
+===========
+
+QSN Javascript Client
