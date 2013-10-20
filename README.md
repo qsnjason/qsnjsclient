@@ -31,12 +31,16 @@ Client Management
 
 Instantiation uses the standard drill.
 
+	// Capture login failures
+	qsn.on('login',function(return) {
+	});
+
 	qsn.connect(function() {
 		var instrs = qsn.getInstrs();
 		console.log(instrs);
 	});
 
-The `connect()` method will initiate a connection, login, process startup, and execute the supplied callback. This requires login details provided in `config` via API Key or username/password. The client will maintain state as well as manage as any reconnections necessary. The provided callback will only be called once at startup.
+The `connect()` method will start a QSN connection and execute the supplied callback once complete. This requires login details provided in `config` via API Key or username/password. The client will maintain state as well as manage any reconnections necessary. The provided callback will only be called once at startup.
 
 	qsn.on('reconnect',function() {
 		console.log('reconnected');	
@@ -56,6 +60,19 @@ To receive socket close events, set a `closed` handler.
 
 To receive socket error events, set a `error` handler. The provided `err` contains the encountered error.
 
+Logs
+---
+
+	qsn.on('log',function(msg) {
+		console.log(msg);
+	});
+
+Log messages may be captured by configuring a log handler. Adding a log handler will disable console logging. Here `msg` is an object containing logged parameters and data.
+
+	console.log(qsn.getLogs());
+
+QSN Client caches and will return the latest 300 log entries in an array object.
+
 API Keys
 ---
 
@@ -64,7 +81,7 @@ API Keys
 		localStorage.apikey = JSON.stringify(key);
 	});
 
-An API Key can be requested once a connection is established. When returned, it is used for client authentication in any subsequent logins. The request must contain a name for the requesting application. It will be used for application identification and key management purposes in the QSN Console.
+An API Key can be requested once a connection is established. When received, it should be used for client authentication. The key request must contain a name for the requesting application. The name will be used for application identification and key management purposes in the QSN Console.
 
 	// Read Key from localStorage
 	var apikey = JSON.parse(localStorage.apikey);
@@ -107,26 +124,12 @@ Subscribe
 
 A subscription request must always have a minimum of `type` and `name` specified. The onload event will execute once when the model has been loaded. The onquote event will execute once for each quote received.
 
-
 Unsubscribe
 ---
 
 	qsn.unsubscribe(instr);
 
 Unsubscribe will disable events and cleanly shutdown the provided model.
-
-Logs
----
-
-	qsn.on('log',function(msg) {
-		console.log(msg);
-	});
-
-Log messages may be captured by configuring a log handler. Doing so will disable console logging. Here `msg` is an object containing logged parameters and data.
-
-	console.log(qsn.getLogs());
-
-QSN Client caches and will return the latest 300 log entries in an array object.
 
 BBS Messaging
 ---
