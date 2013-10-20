@@ -1,9 +1,9 @@
 qsnjsclient
 ===
 
-The QSN Javascript Client implements the QSN messaging API in Javascript over Websocket. Supported methods include access to model data, BBS messaging, and platform notifications. The client implements an asynchronous messaging model and data caching system, providing realtime access to the QSN platform within node.js or HTML5 browsers.
+The QSN Javascript Client implements the QSN messaging API in Javascript over Websocket. Supported methods include access to model data, BBS messaging, and platform notifications. This client implements an asynchronous messaging model and data caching system, providing realtime access to the QSN platform within HTML5 browsers.
 
-This client requires the jsSHA library. https://github.com/Caligatio/jsSHA.git
+This client requires the jsSHA library for login methods. https://github.com/Caligatio/jsSHA.git
 
 Client Configuration
 ---
@@ -14,15 +14,21 @@ The default QSN gateway is Europe (eu). Also available are 'am' (Americas) and '
 		gateway = 'eu'
 	};
 
-Access to the QSN private network is restricted. A valid account is required to login to QSN. A requesting client can chose access method by providing either username and password or apikey and apisecret.
+Access to the QSN private network is restricted. A valid account is required to login to QSN. A requesting client can select access method by providing either `username` and `password` or `apikey` and `apisecret`.
 
 	config.username = 'username';
 	config.password = 'password';
 
-API Key is the preferred login method. It provides access without storing username and password. An automated mechanism for request and receipt of API Keys is provided by the client. The client does not provide for storage of the API Key.
+API Key is the preferred login method. It provides access without the need for username and password caching. An automated mechanism for request and receipt of API Keys is provided by the client. The client does not provide for storage of the API Key. The application utilizing the QSN Client should make a reasonable attempt to secure the API Key.
 
 	config.apikey = 'apikey';
 	config.apisecret = 'apisecret';
+
+Data caching is maintained by the client. Default values for data caching are the QSN settings. Note that larger values may not be provided by QSN.
+
+	config.cacheseconds = 600;
+	config.cacheminutes = 1440;
+	config.cachehours = 750;
 
 Client Management
 ---
@@ -31,14 +37,16 @@ Instantiation by the normal means. The `config` object is created in *Client Con
 
 	var qsn = new QSNClient(config);
 
-The `connect()` method will start a QSN connection and execute the supplied callback once complete. This requires login details provided in `config` via API Key or username/password. The client will maintain state as well as manage any reconnections necessary. The provided callback will only be called once at startup.
+The `connect()` method will start a QSN connection and execute the supplied callback when complete. This requires login details provided in `config`. The client will maintain state and handle all reconnections. The provided callback will be executed once at startup only.
 
+	// We may want to look out for login failures.
 	qsn.on('login',function(return) {
 		if ( return === false ) {
 			alert('login failed');
 		}
 	});
 
+	// Connect, get instrument list.
 	qsn.connect(function() {
 		var instrs = qsn.getInstrs();
 		console.log(instrs);
@@ -67,8 +75,13 @@ Logs
 
 Log messages may be captured by configuring a log handler. Adding a log handler will disable console logging. Here `msg` is an object containing logged parameters and data.
 
+	// Disable logging of non-errors.
 	qsn.on('log',function(msg) {
-		console.log(msg);
+		if ( msg.error === true ) {
+			console.log('error',msg);
+		} else {
+			return;
+		}
 	});
 
 QSN Client caches and will return the latest 300 log entries in an array object.
