@@ -8,7 +8,7 @@ This client requires the jsSHA library. https://github.com/Caligatio/jsSHA.git
 Client Configuration
 ---
 
-The default QSN gateway is Europe (eu). Available choices are 'am' (Americas), 'eu' (Europe), 'as', (Asia).
+The default QSN gateway is Europe (eu). Also available are 'am' (Americas) and 'as' (Asia).
 
 	var config = {
 		gateway = 'eu'
@@ -78,11 +78,10 @@ QSN Client caches and will return the latest 300 log entries in an array object.
 API Keys
 ---
 
-An API Key can be requested once a connection is established. When received, it should be used for client authentication. The key request must contain a name for the requesting application. The name will be used for application identification and key management purposes in the QSN Console.
+An API Key can be requested when a connection is established using the username/password options above. When received, it should be used and cached for client authentication. The key request must contain a `name` for the requesting application. The `name` will be used for application identification and key management purposes in the QSN Console. API Keys can be revoked by the user at any time. They provide restricted access to account data, but full access to all other platform components.
 
 	qsn.getApiKey("Bob's Slack Trader", function(key) {
-		// In chrome, you may want to store the key in localStorage.
-		localStorage.apikey = JSON.stringify(key);
+  console.log(key);
 	});
 
 	// Read Key from localStorage
