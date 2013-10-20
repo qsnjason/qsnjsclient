@@ -19,7 +19,7 @@ Access to the QSN private network is restricted. A valid account is required to 
 	config.username = 'username';
 	config.password = 'password';
 
-API Key is the preferred login method. It provides access without using the account's username and password. An automated mechanism for request and receipt of API Keys is provided by the client. The client does not provide for storage of the API Key.
+API Key is the preferred login method. It provides access without storing username and password. An automated mechanism for request and receipt of API Keys is provided by the client. The client does not provide for storage of the API Key.
 
 	config.apikey = 'apikey';
 	config.apisecret = 'apisecret';
@@ -34,9 +34,9 @@ Instantiation uses the standard drill.
 The `connect()` method will start a QSN connection and execute the supplied callback once complete. This requires login details provided in `config` via API Key or username/password. The client will maintain state as well as manage any reconnections necessary. The provided callback will only be called once at startup.
 
 	qsn.on('login',function(return) {
-  if ( return === false ) {
-   alert('login failed');
-  }
+		if ( return === false ) {
+			alert('login failed');
+		}
 	});
 
 	qsn.connect(function() {
