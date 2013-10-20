@@ -27,9 +27,11 @@ API Key is the preferred login method. It provides access without using the acco
 Client Management
 ---
 
+Instantiation uses the standard drill.
+
 	var qsn = new QSNClient(config);
 
-Instantiation uses the standard drill.
+The `connect()` method will start a QSN connection and execute the supplied callback once complete. This requires login details provided in `config` via API Key or username/password. The client will maintain state as well as manage any reconnections necessary. The provided callback will only be called once at startup.
 
 	qsn.on('login',function(return) {
   if ( return === false ) {
@@ -42,48 +44,46 @@ Instantiation uses the standard drill.
 		console.log(instrs);
 	});
 
-The `connect()` method will start a QSN connection and execute the supplied callback once complete. This requires login details provided in `config` via API Key or username/password. The client will maintain state as well as manage any reconnections necessary. The provided callback will only be called once at startup.
+To receive reconnect events, set a `reconnect` handler.
 
 	qsn.on('reconnect',function() {
 		console.log('reconnected');	
 	});
 
-To receive reconnect events, set a `reconnect` handler.
+To receive socket close events, set a `closed` handler.
 
 	qsn.on('closed',function() {
 		console.log('socket closed');	
 	});
 
-To receive socket close events, set a `closed` handler.
+To receive socket error events, set a `error` handler. The provided `err` contains the encountered error.
 
 	qsn.on('error',function(err) {
 		console.log('socket error',err);	
 	});
 
-To receive socket error events, set a `error` handler. The provided `err` contains the encountered error.
-
 Logs
 ---
+
+Log messages may be captured by configuring a log handler. Adding a log handler will disable console logging. Here `msg` is an object containing logged parameters and data.
 
 	qsn.on('log',function(msg) {
 		console.log(msg);
 	});
 
-Log messages may be captured by configuring a log handler. Adding a log handler will disable console logging. Here `msg` is an object containing logged parameters and data.
+QSN Client caches and will return the latest 300 log entries in an array object.
 
 	console.log(qsn.getLogs());
 
-QSN Client caches and will return the latest 300 log entries in an array object.
-
 API Keys
 ---
+
+An API Key can be requested once a connection is established. When received, it should be used for client authentication. The key request must contain a name for the requesting application. The name will be used for application identification and key management purposes in the QSN Console.
 
 	qsn.getApiKey("Bob's Slack Trader", function(key) {
 		// In chrome, you may want to store the key in localStorage.
 		localStorage.apikey = JSON.stringify(key);
 	});
-
-An API Key can be requested once a connection is established. When received, it should be used for client authentication. The key request must contain a name for the requesting application. The name will be used for application identification and key management purposes in the QSN Console.
 
 	// Read Key from localStorage
 	var apikey = JSON.parse(localStorage.apikey);
@@ -100,15 +100,17 @@ An API Key can be requested once a connection is established. When received, it 
 Listing Models
 ---
 
+A list of all instrument types and names along with their current stats will be returned by the `getInstrs()` method after a client has logged in. All currently available models are located within the 'net' key.
+
 	qsn.connect(function() {
 		var models = qsn.getInstrs().net;
 		console.log(models);
 	});
 
-A list of all instrument types and names along with their current stats will be returned by the `getInstrs()` method after a client has logged in. All currently available models are located within the 'net' key.
-
 Subscribe
 ---
+
+A subscription request must always have a minimum of `type` and `name` specified. The onload event will execute once when the model has been loaded. The onquote event will execute once for each quote received.
 
 	qsn.connect(function() {
 		var subto = {
@@ -124,45 +126,43 @@ Subscribe
 		qsn.subscribe(subto);
 	});
 
-A subscription request must always have a minimum of `type` and `name` specified. The onload event will execute once when the model has been loaded. The onquote event will execute once for each quote received.
-
 Unsubscribe
 ---
 
-	qsn.unsubscribe(instr);
-
 Unsubscribe will disable events and cleanly shutdown the provided model.
+
+	qsn.unsubscribe(instr);
 
 BBS Messaging
 ---
+
+BBS messages are distributed immediately upon receipt. Messages are distributed as objects containing message parameters and data.
 
 	qsn.on('bbs',function(msg) {
 		console.log(msg);
 	});
 
-BBS messages are distributed immediately upon receipt. Messages are distributed as objects containing message parameters and data.
+QSN Client caches and will return the latest 300 BBS messages in an array object.
 
 	console.log(qsn.getBBS());
 
-QSN Client caches and will return the latest 300 BBS messages in an array object.
-
 Minfo Data
 ---
+
+Minfo messages contain updates to model stats. Messages are distributed as objects containing model parameters and data.
 
 	qsn.on('minfo',function(msg) {
 		console.log(msg);
 	});
 
-Minfo messages contain updates to model stats. Messages are distributed as objects containing model parameters and data.
-
 SysNotice Data
 ---
+
+Minfo messages contain updates to model stats. Messages are distributed as objects containing model parameters and data.
 
 	qsn.on('sysnotice',function(msg) {
 		console.log(msg);
 	});
-
-Minfo messages contain updates to model stats. Messages are distributed as objects containing model parameters and data.
 
 License
 ===
