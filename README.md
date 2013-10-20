@@ -1,7 +1,7 @@
 qsnjsclient
 ===
 
-The QSN Javascript Client implements the QSN messaging API in Javascript over Websocket. Supported methods include limited account access, realtime model data, BBS messaging, and platform notifications. The client implements an asynchronous messaging model and data caching system, providing realtime access to the QSN platform.
+The QSN Javascript Client implements the QSN messaging API in Javascript over Websocket. Supported methods include access to model data, BBS messaging, and platform notifications. The client implements an asynchronous messaging model and data caching system, providing realtime access to the QSN platform within node.js or HTML5 browsers.
 
 This client requires the jsSHA library. https://github.com/Caligatio/jsSHA.git
 
@@ -56,7 +56,7 @@ To receive socket close events, set a `closed` handler.
 		console.log('socket closed');	
 	});
 
-To receive socket error events, set a `error` handler. The provided `err` contains the encountered error.
+To receive socket error events, set an `error` handler. The provided `err` object contains the encountered error.
 
 	qsn.on('error',function(err) {
 		console.log('socket error',err);	
@@ -100,7 +100,7 @@ An API Key can be requested once a connection is established. When received, it 
 Listing Models
 ---
 
-A list of all instrument types and names along with their current stats will be returned by the `getInstrs()` method after a client has logged in. All currently available models are located within the 'net' key.
+A list of all instrument types and names along with their current stats will be returned by the `getInstrs()` method after a client has connected. All currently available models are located within the 'net' key.
 
 	qsn.connect(function() {
 		var models = qsn.getInstrs().net;
