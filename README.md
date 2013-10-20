@@ -8,21 +8,21 @@ This client requires the jsSHA library. https://github.com/Caligatio/jsSHA.git
 Client Configuration
 ---
 
+The default QSN gateway is Europe (eu). Available choices are 'am' (Americas), 'eu' (Europe), 'as', (Asia).
+
 	var config = {
 		gateway = 'eu'
 	};
 
-The default QSN gateway is Europe (eu). Available choices are 'am' (Americas), 'eu' (Europe), 'as', (Asia).
+Access to the QSN private network is restricted. A valid account is required to login to QSN. A requesting client can chose access method by providing either username and password or apikey and apisecret.
 
 	config.username = 'username';
 	config.password = 'password';
 
-Access to the QSN private network is restricted. A valid account is required to login to QSN. A requesting client can chose access method by providing either username and password or apikey and apisecret.
+API Key is the preferred login method. It provides access without using the account's username and password. An automated mechanism for request and receipt of API Keys is provided by the client. The client does not provide for storage of the API Key.
 
 	config.apikey = 'apikey';
 	config.apisecret = 'apisecret';
-
-API Key is the preferred login method. It provides access without using the account's username and password. An automated mechanism for request and receipt of API Keys is provided by the client. The client does not provide for storage of the API Key.
 
 Client Management
 ---
@@ -31,8 +31,10 @@ Client Management
 
 Instantiation uses the standard drill.
 
-	// Capture login failures
 	qsn.on('login',function(return) {
+  if ( return === false ) {
+   alert('login failed');
+  }
 	});
 
 	qsn.connect(function() {
