@@ -70,10 +70,17 @@ To receive socket error events, set an `error` handler. The provided `err` objec
 		console.log('socket error',err);	
 	});
 
+Client Status
+---
+
+The Client maintains running status and metric data. The `getStatus` method will return an object containing the status data.
+
+	console.log(qsn.getStatus());
+
 Logs
 ---
 
-Log messages may be captured by configuring a log handler. Adding a log handler will disable console logging. Here `msg` is an object containing logged parameters and data.
+Log messages may be captured by configuring a log handler. Adding a log handler will disable internal console logging. The `msg` argument is an object containing logged parameters and data.
 
 	// Disable logging of non-errors.
 	qsn.on('log',function(msg) {
@@ -84,7 +91,7 @@ Log messages may be captured by configuring a log handler. Adding a log handler 
 		}
 	});
 
-QSN Client caches and will return the latest 300 log entries in an array object.
+The Client caches and will return the latest 300 log entries in an array object.
 
 	console.log(qsn.getLogs());
 
@@ -167,10 +174,10 @@ Minfo messages contain updates to model stats. Messages are distributed as objec
 		console.log(msg);
 	});
 
-SysNotice Data
+SysNotice Messages
 ---
 
-Minfo messages contain updates to model stats. Messages are distributed as objects containing model parameters and data.
+SysNotice Messages contain platform wide notifications. They are used during some holidays and platform issues. Messages are distributed as a singular string. They can be captured using the `sysnotice` event.
 
 	qsn.on('sysnotice',function(msg) {
 		console.log(msg);
