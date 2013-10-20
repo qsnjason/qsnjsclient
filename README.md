@@ -27,7 +27,7 @@ API Key is the preferred login method. It provides access without storing userna
 Client Management
 ---
 
-Instantiation uses the standard drill.
+Instantiation by the normal means. The `config` object is created in *Client Configuration*.
 
 	var qsn = new QSNClient(config);
 
