@@ -1,7 +1,7 @@
 qsnjsclient
 ===
 
-The QSN Javascript Client implements the QSN messaging API in Javascript over Websocket. Supported methods include access to model data, BBS messaging, and platform notifications. This client implements an asynchronous messaging model and data caching system, providing realtime access to the QSN platform within HTML5 browsers.
+The QSN Javascript Client implements the QSN websocket messaging API. Client methods provide access to model data, BBS messaging, and platform notifications. This client implements an asynchronous model with local caching, providing realtime access to the QSN platform within HTML5 browsers.
 
 This client requires the jsSHA library. https://github.com/Caligatio/jsSHA.git
 
@@ -24,13 +24,13 @@ API Key is the preferred login method. It provides access without the need for u
 	config.apikey = 'apikey';
 	config.apisecret = 'apisecret';
 
-Instrument data caching is maintained by the client. Default values for data caching are the QSN settings shown below. Note that larger values may not be provided by QSN.
+Instrument data is maintained by the client. Default values for caching are the QSN settings shown below. Note that larger values may not be provided by QSN.
 
 	config.cacheseconds = 600;
 	config.cacheminutes = 1440;
 	config.cachehours = 750;
 
-The client will cache instrument seconds data by default. This can be disabled by setting `noseconds` in the client `config`. This will result in less work for the client.
+The client will maintain a cache of instrument seconds data by default. This can be disabled by setting `noseconds` in the client `config`. This will result in a reduced workload for the client.
 
 	config.noseconds = true;
 
