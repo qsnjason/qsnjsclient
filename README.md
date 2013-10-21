@@ -74,10 +74,16 @@ To receive socket error events, set an `error` handler. The provided `err` objec
 		console.log('socket error',err);	
 	});
 
+To receive a combined `close` and `error`, set a `down` handler. The provided `src` object contains the origin of the event.
+
+	qsn.on('down',function(reason) {
+		console.log('socket down',reason);	
+	});
+
 Client Status
 ---
 
-The client maintains running status and metric data. The `getStatus` method will return an object containing the status data.
+The client maintains running status and metric data. The `getStatus()` method will return an object containing the status data.
 
 	console.log(qsn.getStatus());
 
@@ -95,14 +101,14 @@ Log events are emitted by the client. Adding a log handler will disable internal
 		}
 	});
 
-The client caches and `getLogs()` will return the most recent 300 log entries in an array object.
+The `getLogs()` method will return the most recent 300 log entries in an array object.
 
 	console.log(qsn.getLogs());
 
 API Keys
 ---
 
-An API Key can be requested by an application once a user has logged in using their username/password pair. When received, it should be cached and used for all future client authentication. The key request must contain a `name` for the requesting application. The `name` will be used for application identification and key management purposes in the QSN Console. API Keys can be revoked by the user at any time. They provide restricted access to account data, but full access to all other platform components.
+An API Key can be requested by an application once a user has logged in with their username/password pair. When the key is received, it should be cached and used for all future client authentication. The key request must contain a `name` for the requesting application. The `name` will be used for application identification and key management purposes in the QSN Console. API Keys can be revoked by the user at any time. They provide restricted access to account data, but full access to all other platform components.
 
 	// Request Key
 	qsn.getApiKey("Bob's Slack Trader", function(key) {
