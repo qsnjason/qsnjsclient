@@ -84,7 +84,7 @@ The client maintains running status and metric data. The `getStatus` method will
 Logs
 ---
 
-Log messages may be captured by configuring a log handler. Adding a log handler will disable internal console logging. The `msg` argument is an object containing logged parameters and data.
+Log events are emitted by the client. Adding a log handler will disable internal console logging. The `msg` argument is an object containing logged parameters and data.
 
 	// Disable logging of non-errors.
 	qsn.on('log',function(msg) {
@@ -95,14 +95,14 @@ Log messages may be captured by configuring a log handler. Adding a log handler 
 		}
 	});
 
-The client caches and will return the latest 300 log entries in an array object.
+The client caches and `getLogs()` will return the most recent 300 log entries in an array object.
 
 	console.log(qsn.getLogs());
 
 API Keys
 ---
 
-An API Key can be requested when a connection is established using the username/password options above. When received, it should be used and cached for client authentication. The key request must contain a `name` for the requesting application. The `name` will be used for application identification and key management purposes in the QSN Console. API Keys can be revoked by the user at any time. They provide restricted access to account data, but full access to all other platform components.
+An API Key can be requested by an application once a user has logged in using their username/password pair. When received, it should be cached and used for all future client authentication. The key request must contain a `name` for the requesting application. The `name` will be used for application identification and key management purposes in the QSN Console. API Keys can be revoked by the user at any time. They provide restricted access to account data, but full access to all other platform components.
 
 	// Request Key
 	qsn.getApiKey("Bob's Slack Trader", function(key) {
@@ -123,9 +123,10 @@ An API Key can be requested when a connection is established using the username/
 Listing Models
 ---
 
-A list of all instrument types and names along with their current stats will be returned by the `getInstrs()` method after a client has connected. All currently available models are located within the 'net' key.
+An object containing all available instruments along with their current stats will be returned by the `getInstrs()` method after a client has connected.
 
 	qsn.connect(function() {
+		// All currently published models are within 'net'.
 		var models = qsn.getInstrs().net;
 		console.log(models);
 	});
