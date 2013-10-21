@@ -77,7 +77,7 @@ To receive socket error events, set an `error` handler. The provided `err` objec
 Client Status
 ---
 
-The Client maintains running status and metric data. The `getStatus` method will return an object containing the status data.
+The client maintains running status and metric data. The `getStatus` method will return an object containing the status data.
 
 	console.log(qsn.getStatus());
 
@@ -95,7 +95,7 @@ Log messages may be captured by configuring a log handler. Adding a log handler 
 		}
 	});
 
-The Client caches and will return the latest 300 log entries in an array object.
+The client caches and will return the latest 300 log entries in an array object.
 
 	console.log(qsn.getLogs());
 
@@ -165,7 +165,7 @@ BBS messages are distributed immediately upon receipt. Messages are distributed 
 		console.log(msg);
 	});
 
-QSN Client caches and will return the latest 300 BBS messages in an array object.
+The client caches and will return the latest 300 BBS messages in an array object.
 
 	console.log(qsn.getBBS());
 
