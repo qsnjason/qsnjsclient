@@ -8,10 +8,10 @@ This client requires the jsSHA library. https://github.com/Caligatio/jsSHA.git
 Client Configuration
 ---
 
-The default QSN gateway is Europe (eu). Also available are 'am' (Americas) and 'as' (Asia).
+The default QSN gateway is Europe (eu.quantsig.net). Also available are 'am.quantsig.net' (Americas) and 'as.quantsig.net' (Asia).
 
 	var config = {
-		gateway = 'eu'
+		gateway = 'eu.quantsig.net'
 	};
 
 Access to the QSN private network is restricted. A valid account is required to login to QSN. A requesting client can select access method by providing either `username` and `password` or `apikey` and `apisecret`.
@@ -33,6 +33,10 @@ Instrument data is maintained by the client. Default values for caching are the 
 The client will maintain a cache of instrument seconds data by default. This can be disabled by setting `noseconds` in the client `config`. This will result in a reduced workload for the client.
 
 	config.noseconds = true;
+
+Debug mode may be specified to increase logging verbosity.
+
+	config.debug = true;
 
 Client Management
 ---
@@ -193,6 +197,20 @@ SysNotice Messages contain platform wide notifications. They are used during som
 	qsn.on('sysnotice',function(msg) {
 		console.log(msg);
 	});
+
+Send Raw Message
+---
+
+The `sendMessage()` method will send a raw message on the QSN socket. It should not be used by an application under most circumstances.
+
+	var msg = {
+		type: 'sub',
+		body: {
+			type: 'net',
+			name: 'fx_gbpusd_a'
+		}
+	};
+	qsn.sendMessage(msg);
 
 License
 ===
