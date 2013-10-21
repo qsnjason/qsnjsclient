@@ -3,7 +3,7 @@ qsnjsclient
 
 The QSN Javascript Client implements the QSN messaging API in Javascript over Websocket. Supported methods include access to model data, BBS messaging, and platform notifications. This client implements an asynchronous messaging model and data caching system, providing realtime access to the QSN platform within HTML5 browsers.
 
-This client requires the jsSHA library for login methods. https://github.com/Caligatio/jsSHA.git
+This client requires the jsSHA library. https://github.com/Caligatio/jsSHA.git
 
 Client Configuration
 ---
@@ -24,11 +24,15 @@ API Key is the preferred login method. It provides access without the need for u
 	config.apikey = 'apikey';
 	config.apisecret = 'apisecret';
 
-Data caching is maintained by the client. Default values for data caching are the QSN settings. Note that larger values may not be provided by QSN.
+Instrument data caching is maintained by the client. Default values for data caching are the QSN settings. Note that larger values may not be provided by QSN.
 
 	config.cacheseconds = 600;
 	config.cacheminutes = 1440;
 	config.cachehours = 750;
+
+The client will cache instrument seconds data by default. This can be disabled by setting `noseconds` in the client `config`. This will result in a lighter weight client.
+
+	config.noseconds = true;
 
 Client Management
 ---
@@ -101,7 +105,7 @@ API Keys
 An API Key can be requested when a connection is established using the username/password options above. When received, it should be used and cached for client authentication. The key request must contain a `name` for the requesting application. The `name` will be used for application identification and key management purposes in the QSN Console. API Keys can be revoked by the user at any time. They provide restricted access to account data, but full access to all other platform components.
 
 	qsn.getApiKey("Bob's Slack Trader", function(key) {
-  console.log(key);
+		console.log(key);
 	});
 
 	// Read Key from localStorage
@@ -114,7 +118,7 @@ An API Key can be requested when a connection is established using the username/
 	var qsn = new QSNClient(config);
 	qsn.connect(function() {
 		console.log('connected');
-`});
+	});	
 
 Listing Models
 ---
@@ -129,7 +133,7 @@ A list of all instrument types and names along with their current stats will be 
 Subscribe
 ---
 
-A subscription request must always have a minimum of `type` and `name` specified. The onload event will execute once when the model has been loaded. The onquote event will execute once for each quote received.
+A subscription request must always have a minimum of `type` and `name` specified. The onload event will execute once when the model has been loaded. The onquote event will execute for every quote received.
 
 	qsn.connect(function() {
 		var subto = {
@@ -139,7 +143,7 @@ A subscription request must always have a minimum of `type` and `name` specified
 				console.log(instr.name + ' loaded')
 			},
 			onquote: function(instr,quote) {
-				console.log('quote for ' + instr.name + ' ' + quote.diverg);
+				console.log('model quote for ' + instr.name + ' ' + quote.diverg);
 			}
 		};
 		qsn.subscribe(subto);
@@ -148,7 +152,7 @@ A subscription request must always have a minimum of `type` and `name` specified
 Unsubscribe
 ---
 
-Unsubscribe will disable events and cleanly shutdown the provided model.
+Unsubscribe will disable events and cleanly shutdown the provided model. Provide the instrument object to be unsubscribed from.
 
 	qsn.unsubscribe(instr);
 
