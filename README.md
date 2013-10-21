@@ -1,7 +1,7 @@
 qsnjsclient
 ===
 
-The QSN Javascript Client implements the QSN websocket messaging API. Client methods provide access to model data, BBS messaging, and platform notifications. This client implements an asynchronous model with local caching, providing realtime access to the QSN platform within HTML5 browsers.
+The QSN Javascript Client implements the QSN websocket messaging API. Client methods provide access to model data, BBS messaging, and platform notifications. This client exposes an event model with internal caching, providing realtime access to the QSN platform within HTML5 browsers.
 
 This client requires the jsSHA library. https://github.com/Caligatio/jsSHA.git
 
@@ -74,10 +74,10 @@ To receive socket error events, set an `error` handler. The provided `err` objec
 		console.log('socket error',err);	
 	});
 
-To receive a combined `close` and `error`, set a `down` handler. The provided `src` object contains the origin of the event.
+To receive a combined `close` and `error`, set a `down` handler. The provided `src` argument is the origin of the event.
 
-	qsn.on('down',function(reason) {
-		console.log('socket down',reason);	
+	qsn.on('down',function(src) {
+		console.log('socket down',src);	
 	});
 
 Client Status
@@ -132,7 +132,7 @@ Listing Models
 An object containing all available instruments along with their current stats will be returned by the `getInstrs()` method after a client has connected.
 
 	qsn.connect(function() {
-		// All currently published models are within 'net'.
+		// All currently published models are the 'net' type.
 		var models = qsn.getInstrs().net;
 		console.log(models);
 	});
@@ -140,7 +140,7 @@ An object containing all available instruments along with their current stats wi
 Subscribe
 ---
 
-A subscription request must always have a minimum of `type` and `name` specified. The onload event will execute once when the model has been loaded. The onquote event will execute for every quote received.
+A subscription request must have a minimum of `type` and `name` specified. The `onload` event will emit only once, when the model has been loaded. The `onquote` event will emit for every quote received on that model. The `onload` and `onquote` callbacks provided here will override global `load` and `quote` events.
 
 	qsn.connect(function() {
 		var subto = {
