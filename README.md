@@ -24,13 +24,13 @@ API Key is the preferred login method. It provides access without the need for u
 	config.apikey = 'apikey';
 	config.apisecret = 'apisecret';
 
-Instrument data caching is maintained by the client. Default values for data caching are the QSN settings. Note that larger values may not be provided by QSN.
+Instrument data caching is maintained by the client. Default values for data caching are the QSN settings shown below. Note that larger values may not be provided by QSN.
 
 	config.cacheseconds = 600;
 	config.cacheminutes = 1440;
 	config.cachehours = 750;
 
-The client will cache instrument seconds data by default. This can be disabled by setting `noseconds` in the client `config`. This will result in a lighter weight client.
+The client will cache instrument seconds data by default. This can be disabled by setting `noseconds` in the client `config`. This will result in less work for the client.
 
 	config.noseconds = true;
 
@@ -104,16 +104,16 @@ API Keys
 
 An API Key can be requested when a connection is established using the username/password options above. When received, it should be used and cached for client authentication. The key request must contain a `name` for the requesting application. The `name` will be used for application identification and key management purposes in the QSN Console. API Keys can be revoked by the user at any time. They provide restricted access to account data, but full access to all other platform components.
 
+	// Request Key
 	qsn.getApiKey("Bob's Slack Trader", function(key) {
 		console.log(key);
 	});
 
-	// Read Key from localStorage
-	var apikey = JSON.parse(localStorage.apikey);
+	// Use Key
 	var config = {
 		gateway: 'eu',
-		apikey: apikey.key,
-		apisecret: apikey.secret
+		apikey: key.key,
+		apisecret: key.secret
 	};
 	var qsn = new QSNClient(config);
 	qsn.connect(function() {
@@ -194,7 +194,7 @@ This software is distributed under the MIT License.
 
 The MIT License (MIT)
 
-Copyright (c) 2013 Jason Ihde (Quantitative Signals Network) <jason@quantsig.net>
+Copyright (c) 2013 (Quantitative Signals Network) <info@quantsig.net>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
