@@ -45,7 +45,7 @@ Instantiation by the normal means. The `config` object is created in *Client Con
 
 	var qsn = new QSNClient(config);
 
-The `connect()` method will start a QSN connection and execute the supplied callback when complete. This requires login details provided in `config`. The client will maintain state and handle all reconnections. The provided callback will be executed once at startup only.
+The `connect()` and `connect_persist()` methods will start a QSN connection and execute the supplied callback when complete. The `connect_persist()` method requires login details provided in `config`. The client will maintain state and handle all reconnections. The provided callback will be executed once at startup only.
 
 	// We may want to look out for login failures.
 	qsn.on('login',function(return) {
@@ -146,19 +146,17 @@ Subscribe
 
 A subscription request must have a minimum of `type` and `name` specified. The `onload` event will emit only once, when the model has been loaded. The `onquote` event will emit for every quote received on that model. The `onload` and `onquote` callbacks provided here will override global `load` and `quote` events.
 
-	qsn.connect(function() {
-		var subto = {
-			type: 'net',
-			name: 'fx_gbpusd_a',
-			onload: function(instr) {
-				console.log(instr.name + ' loaded')
-			},
-			onquote: function(instr,quote) {
-				console.log('model quote for ' + instr.name + ' ' + quote.diverg);
-			}
-		};
-		qsn.subscribe(subto);
-	});
+	var subto = {
+		type: 'net',
+		name: 'fx_gbpusd_a',
+		onload: function(instr) {
+			console.log(instr.name + ' loaded')
+		},
+		onquote: function(instr,quote) {
+			console.log('model quote for ' + instr.name + ' ' + quote.diverg);
+		}
+	};
+	qsn.subscribe(subto);
 
 Unsubscribe
 ---
@@ -201,7 +199,7 @@ SysNotice Messages contain platform wide notifications. They are used during som
 Send Raw Message
 ---
 
-The `sendMessage()` method will send a raw message on the QSN socket. It should not be used by an application under most circumstances.
+The `sendMessage()` method will send a raw message on the QSN socket. It should not be used by an application under most circumstances. Message will be encoded into JSON before sending.
 
 	var msg = {
 		type: 'sub',
