@@ -208,9 +208,10 @@ function qsnClient(conf) {
  };
 
  this.receiveError = function(message) {
-  c.logerr(['receiveError: QSN error message', message.error]);
   if ( c.state.on.error ) {
    c.state.on.error(message.error);
+  } else {
+   c.logerr(['receiveError: QSN error message', message.error]);
   }
  };
 
@@ -224,13 +225,15 @@ function qsnClient(conf) {
  this.receiveSubscribe = function(m) {
   if ( m.body.result.ok === false ) {
    if ( c.state.onload[m.body.type + m.body.name]) {
-    c.state.onload[m.body.type + m.body.name](m);
+    c.state.onload[m.body.type + m.body.name](m.body);
    }
   }
  };
 
  this.receiveResume = function(m) {
-  return;
+  if ( c.state.on.resume ) {
+   c.state.on.resume(m.body);
+  }
  };
 
  this.subscribe = function(want) {
@@ -346,10 +349,10 @@ function qsnClient(conf) {
  };
 
  this.receiveSysNotice = function(m) {
-  if ( m && m.body && m.body.value ) {
+  if ( m && m.body ) {
    c.state.sysnotice = m.body.value;
    if ( c.state.on.sysnotice ) {
-    c.state.on.sysnotice(m.body.value);
+    c.state.on.sysnotice(m.body);
    } else {
     c.logger(['receiveSysNotice:',m.body.value]);
    }
@@ -681,12 +684,8 @@ function qsnClient(conf) {
     return;
    break;
    default:
-    if ( c.state.on.defaultmessage ) {
-     c.state.on.defaultmessage(message);
-    } else {
-     if ( c.conf.debug ) {
-      c.logger(['messageSwitch: unknown message', JSON.stringify(message)]);
-     }
+    if ( c.state.on.umessage ) {
+     c.state.on.umessage(message);
     }
     return;
    break;
@@ -808,7 +807,8 @@ function qsnClient(conf) {
    c.state.status.pingattempt++;
    c.sendMessage(msg);
    if ( c.state.status.pingattempt > 10 ) {
-    c.logger("sendPing: no reply since " + tl.epochToLocalTimeShort(c.state.status.pingreply));
+    c.logger("sendPing: last reply " + tl.epochToLocalTimeShort(c.state.status.pingreply));
+    c.socketDown();
     c.state.status.pingattempt = 0;
    }
    return;

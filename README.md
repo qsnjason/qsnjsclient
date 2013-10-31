@@ -45,42 +45,42 @@ Instantiation by the normal means. The `config` object is created in *Client Con
 
 	var qsn = new qsnClient(config);
 
-The `connect()` and `connect_persist()` methods will start a QSN connection and execute the supplied callback when complete. The `connect_persist()` method requires login details provided in `config`. The client will maintain state and handle all reconnections. The provided callback will be executed once at startup only.
+Two connection methods are provided. The `connect()` method will simply open a socket. It requires the client application to manage authentication and reconnection where necessary. The `connect_persist()` method will manage the socket connection, any authentication, and emit 'error', 'close', and a combined 'down' event. Do not attempt to manage the connection when using `connect_persist()`.
 
 	// We may want to look out for login failures.
-	qsn.on('login',function(return) {
+	qsn.on('login', function(return,reply) {
 		if ( return === false ) {
 			alert('login failed');
 		}
 	});
 
 	// Connect, get instrument list.
-	qsn.connect(function() {
+	qsn.connect_persist(function() {
 		var instrs = qsn.getInstrs();
 		console.log(instrs);
 	});
 
-To receive reconnect events, set a `reconnect` handler.
+To receive open events, set an `open` handler.
 
-	qsn.on('reconnect',function() {
-		console.log('reconnected');	
+	qsn.on('open', function() {
+		console.log('connected');	
 	});
 
 To receive socket close events, set a `closed` handler.
 
-	qsn.on('closed',function() {
+	qsn.on('closed', function() {
 		console.log('socket closed');	
 	});
 
 To receive socket error events, set an `error` handler. The provided `err` object contains the encountered error.
 
-	qsn.on('error',function(err) {
+	qsn.on('error', function(err) {
 		console.log('socket error',err);	
 	});
 
-To receive a combined `close` and `error`, set a `down` handler. The provided `src` argument is the origin of the event.
+To receive combined `close` and `error` events, set a `down` handler. The provided `src` argument is the origin of the event.
 
-	qsn.on('down',function(src) {
+	qsn.on('down', function(src) {
 		console.log('socket down',src);	
 	});
 
@@ -97,7 +97,7 @@ Logs
 Log events are emitted by the client. Adding a log handler will disable internal console logging. The `msg` argument is an object containing logged parameters and data.
 
 	// Disable logging of non-errors.
-	qsn.on('log',function(msg) {
+	qsn.on('log', function(msg) {
 		if ( msg.error === true ) {
 			console.log('error',msg);
 		} else {
@@ -112,21 +112,22 @@ The `getLogs()` method will return the most recent 300 log entries in an array o
 API Keys
 ---
 
-An API Key can be requested by an application once a user has logged in with their username/password pair. When the key is received, it should be cached and used for all future client authentication. The key request must contain a `name` for the requesting application. The `name` will be used for application identification and key management purposes in the QSN Console. API Keys can be revoked by the user at any time. They provide restricted access to account data, but full access to all other platform components.
+An API Key can be requested by an application once a user has logged in with their username/password pair. When the key is received, it should be cached and used for all future authentication for this user. The key request must contain a `name` for the requesting application. The `name` will be used for application identification and key management purposes in the QSN Console. API Keys can be revoked by the user at any time. They provide restricted access to account data, but full access to all other platform components.
 
 	// Request Key
-	qsn.getApiKey("Bob's Slack Trader", function(key) {
+	qsn.getApiKey("bobTrad version 1.0 codename traDbob", function(key) {
 		console.log(key);
 	});
 
-	// Use Key
+	// Use Key -- Set debug if required.
 	var config = {
+		debug: true,
 		gateway: 'eu',
 		apikey: key.key,
 		apisecret: key.secret
 	};
 	var qsn = new qsnClient(config);
-	qsn.connect(function() {
+	qsn.connect_persist(function() {
 		console.log('connected');
 	});	
 
@@ -161,29 +162,31 @@ A subscription request must have a minimum of `type` and `name` specified. The `
 Unsubscribe
 ---
 
-Unsubscribe will disable events and cleanly shutdown the provided model. Provide the instrument object to be unsubscribed from.
+Unsubscribe will disable events and cleanly shutdown the provided model internally. Provide the instrument object to be unsubscribed from.
 
-	qsn.unsubscribe(instr);
+	qsn.unsubscribe(instr, function(result) {
+  console.log('unsubscribed from instrument', instr.name);
+ });
 
 BBS Messaging
 ---
 
 BBS messages are distributed immediately upon receipt. Messages are distributed as objects containing message parameters and data.
 
-	qsn.on('bbs',function(msg) {
+	qsn.on('bbs', function(msg) {
 		console.log(msg);
 	});
 
 The client caches and will return the latest 300 BBS messages in an array object.
 
-	console.log(qsn.getBBS());
+	var bbs = qsn.getBBS();
 
 Minfo Data
 ---
 
 Minfo messages contain updates to model stats. Messages are distributed as objects containing model parameters and data.
 
-	qsn.on('minfo',function(msg) {
+	qsn.on('minfo', function(msg) {
 		console.log(msg);
 	});
 
@@ -192,7 +195,7 @@ SysNotice Messages
 
 SysNotice Messages contain platform wide notifications. They are used during some holidays and platform issues. Messages are distributed as a singular string. They can be captured using the `sysnotice` event.
 
-	qsn.on('sysnotice',function(msg) {
+	qsn.on('sysnotice', function(msg) {
 		console.log(msg);
 	});
 
