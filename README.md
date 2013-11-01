@@ -105,10 +105,6 @@ Log events are emitted by the client. Adding a log handler will disable internal
 		}
 	});
 
-The `getLogs()` method will return the most recent 300 log entries in an array object.
-
-	console.log(qsn.getLogs());
-
 API Keys
 ---
 
