@@ -1,7 +1,7 @@
 /*jshint globalstrict: true*/
 /*jshint browser: true*/
 "use strict";
-function qsnClient(conf) {
+function QSNClient(conf) {
  var c = this;
  c.state = {
   account: {},
@@ -105,9 +105,9 @@ function qsnClient(conf) {
 
  this.receiveUpstream = function(msg) {
   if ( msg && msg.body ) {
-   c.state.status.upstream = message.body;
+   c.state.status.upstream = msg.body;
    if ( c.state.on.upstream ) {
-    c.state.on.upstream(message.body);
+    c.state.on.upstream(msg.body);
    }
   }
  };
@@ -807,7 +807,7 @@ function qsnClient(conf) {
    c.state.status.pingattempt++;
    c.sendMessage(msg);
    if ( c.state.status.pingattempt > 10 ) {
-    c.logger("sendPing: last reply " + tl.epochToLocalTimeShort(c.state.status.pingreply));
+    c.logger("sendPing: last reply " + c.epochToDateTimeStr(c.state.status.pingreply) + ' UTC');
     c.socketDown();
     c.state.status.pingattempt = 0;
    }
@@ -887,7 +887,7 @@ function qsnClient(conf) {
   if ( c.state.on.log ) {
    c.state.on.log(log);
   } else {
-   console.log(tl.epochToDateTimeStr(log.ts) + ' ' + log.source + ' ' + log.message);
+   console.log(c.epochToDateTimeStr(log.ts) + ' UTC ' + log.source + ' ' + log.message);
   }
  };
  this.logerr = function(log) {

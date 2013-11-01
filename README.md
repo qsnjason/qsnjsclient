@@ -43,7 +43,7 @@ Client Management
 
 Instantiation by the normal means. The `config` object is created in *Client Configuration*.
 
-	var qsn = new qsnClient(config);
+	var qsn = new QSNClient(config);
 
 Two connection methods are provided. The `connect()` method will simply open a socket. It requires the client application to manage authentication and reconnection where necessary. The `connect_persist()` method will manage the socket connection, any authentication, and emit 'error', 'close', and a combined 'down' event. Do not attempt to manage the connection when using `connect_persist()`.
 
@@ -126,7 +126,7 @@ An API Key can be requested by an application once a user has logged in with the
 		apikey: key.key,
 		apisecret: key.secret
 	};
-	var qsn = new qsnClient(config);
+	var qsn = new QSNClient(config);
 	qsn.connect_persist(function() {
 		console.log('connected');
 	});	
