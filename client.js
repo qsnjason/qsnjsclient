@@ -68,7 +68,7 @@ function QSNClient(conf) {
   return(c.state.account);
  };
 
- this.getInstrs = function() {
+ this.getModels = function() {
   return(c.state.instrs);
  };
 
@@ -78,10 +78,6 @@ function QSNClient(conf) {
 
  this.getBBS = function() {
   return(c.state.bbs);
- };
-
- this.getLogs = function() {
-  return(c.state.logs);
  };
 
  if ( c.conf.on ) {

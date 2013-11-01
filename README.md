@@ -24,13 +24,13 @@ API Key is the preferred login method. It provides access without the need for u
 	config.apikey = 'apikey';
 	config.apisecret = 'apisecret';
 
-Instrument data is maintained by the client. Default values for caching are the QSN settings shown below. Note that larger values may not be provided by QSN.
+Model data is maintained by the client. Default values for caching are the QSN settings shown below. Note that larger values may not be provided by QSN.
 
 	config.cacheseconds = 600;
 	config.cacheminutes = 1440;
 	config.cachehours = 750;
 
-The client will maintain a cache of instrument seconds data by default. This can be disabled by setting `noseconds` in the client `config`. This will result in a reduced workload for the client.
+The client will maintain a cache of model seconds data by default. This can be disabled by setting `noseconds` in the client `config`. This will result in a reduced workload for the client.
 
 	config.noseconds = true;
 
@@ -54,9 +54,9 @@ Two connection methods are provided. The `connect()` method will simply open a s
 		}
 	});
 
-	// Connect, get instrument list.
+	// Connect, get model list.
 	qsn.connect_persist(function() {
-		var instrs = qsn.getInstrs();
+		var instrs = qsn.getModels();
 		console.log(instrs);
 	});
 
@@ -130,11 +130,11 @@ An API Key can be requested by an application once a user has logged in with the
 Listing Models
 ---
 
-An object containing all available instruments along with their current stats will be returned by the `getInstrs()` method after a client has connected.
+An object containing all available models along with their current stats will be returned by the `getModels()` method after a client has connected.
 
 	qsn.connect(function() {
-		// All currently published models are the 'net' type.
-		var models = qsn.getInstrs().net;
+		// All currently published models are within the 'net' type.
+		var models = qsn.getModels().net;
 		console.log(models);
 	});
 
@@ -147,7 +147,7 @@ A subscription request must have a minimum of `type` and `name` specified. The `
 		type: 'net',
 		name: 'fx_gbpusd_a',
 		onload: function(instr) {
-			console.log(instr.name + ' loaded')
+			console.log(instr.name + ' loaded');
 		},
 		onquote: function(instr,quote) {
 			console.log('model quote for ' + instr.name + ' ' + quote.diverg);
@@ -158,10 +158,10 @@ A subscription request must have a minimum of `type` and `name` specified. The `
 Unsubscribe
 ---
 
-Unsubscribe will disable events and cleanly shutdown the provided model internally. Provide the instrument object to be unsubscribed from.
+Unsubscribe will disable events and cleanly shutdown the model. Provide either the model object or an object containing the model `type` and `name` to be unsubscribed from.
 
-	qsn.unsubscribe(instr, function(result) {
-  console.log('unsubscribed from instrument', instr.name);
+	qsn.unsubscribe(model, function(result) {
+  console.log('unsubscribed from model', model.name);
  });
 
 BBS Messaging
