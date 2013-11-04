@@ -80,6 +80,10 @@ function QSNClient(conf) {
   return(c.state.bbs);
  };
 
+ this.getLogs = function() {
+  return(c.state.logs);
+ };
+
  if ( c.conf.on ) {
   c.state.on = c.conf.on;
  }
@@ -113,10 +117,17 @@ function QSNClient(conf) {
    c.logerr(['connect_persist: callback required']);
    return;
   } else {
-   c.state.onboot = function() {
-    delete(c.state.onboot);
-    cb();
-   };
+   if ( c.conf.username || c.conf.apikey ) {
+    c.state.onboot = function() {
+     delete(c.state.onboot);
+     cb();
+    };
+   } else {
+    c.state.onopen = function() {
+     delete(c.state.onopen);
+     cb();
+    };
+   }
   }
   c.state.status.persistent = true;
   c.state.ondown = function(err) {
@@ -138,6 +149,10 @@ function QSNClient(conf) {
  this.startConn = function() {
   if ( (c.conf.username && c.conf.password) || (c.conf.apikey && c.conf.apisecret) ) {
    c.login();
+  } else {
+   if ( c.state.onopen ) {
+    c.state.onopen();
+   } 
   }
   c.state.pinginterval = setInterval(function() {
    c.sendPing();
@@ -157,7 +172,11 @@ function QSNClient(conf) {
    c.logger(['connect: opening ', c.conf.gateway]);
   }
   c.state.status.connecting = true;
-  socket = new WebSocket(c.conf.gateway + '/quote');
+  if ( c.conf.gateway.match(/wss/) ) {
+   socket = new WebSocket(c.conf.gateway + '/quote');
+  } else {
+   socket = new WebSocket('wss://' + c.conf.gateway + '/quote');
+  }
   socket.onmessage = c.messageSwitch;
   socket.onopen = function(event) {
    c.logger('connect: connected');
@@ -345,7 +364,7 @@ function QSNClient(conf) {
  };
 
  this.receiveSysNotice = function(m) {
-  if ( m && m.body ) {
+  if ( m && m.body && m.body.value ) {
    c.state.sysnotice = m.body.value;
    if ( c.state.on.sysnotice ) {
     c.state.on.sysnotice(m.body);
@@ -362,6 +381,7 @@ function QSNClient(conf) {
    c.state.bbs = m.messages;
   }
   c.state.instrs = m.instrs;
+  c.state.countries = m.countries;
   Object.keys(c.state.instrs).forEach(function(type) {
    if ( ! c.state.data[type] ) {
     c.state.data[type] = {};
@@ -370,6 +390,8 @@ function QSNClient(conf) {
   c.state.conf = m.conf;
   c.state.service = m.service;
   c.state.status.upstream = m.upstream;
+  c.state.btcprice = m.btcprice;
+  c.state.serviceprice = m.serviceprice;
   if ( m.sysnotice ) {
    c.receiveSysNotice({ body: { value: m.sysnotice.value } });
   }
@@ -394,7 +416,7 @@ function QSNClient(conf) {
  // Instrument maintenance methods
  this.updateInstrSec = function(instr) {
   var s = instr.seconds;
-  var cf = c.state.conf.datafields[instr.type];
+  var df = c.state.conf.datafields[instr.type];
   var m = instr.minutes;
   var d = new Date();
   var e = d.getTime();
@@ -406,21 +428,21 @@ function QSNClient(conf) {
   var fo, i;
   s.epoch.push(e);
   s.time.push(ct);
-  for ( i=0; i < cf.length; i++ ) {
-   fo = cf[i];
+  for ( i=0; i < df.length; i++ ) {
+   fo = df[i];
    if ( fo.name !== 'epoch' && fo.name !== 'time' ) {
     s[fo.name].push(m[fo.name][midx]);
    }
   }
   if(s.time.length > c.conf.cacheseconds) {
-   for ( i=0; i < cf.length; i++ ) {
-    fo = cf[i];
+   for ( i=0; i < df.length; i++ ) {
+    fo = df[i];
     s[fo.name].shift();
    }
   }
  };
 
- this.receiveQuote = function (message) {
+ this.receiveQuote = function(message) {
   var body = message.body;
   var data = body.data;
   var min = data.min;
@@ -445,7 +467,7 @@ function QSNClient(conf) {
    } else if ( fo.type === 'float' ) {
     min[i] = parseFloat(min[i]);
    }
-   q[fo] = min[i];
+   q[fo.name] = min[i];
   }
   c.updateInstrData(instr,data);
   if ( c.state.onquote[key] ) {
@@ -562,12 +584,13 @@ function QSNClient(conf) {
    c.state.bbs.shift();
   }
   if ( c.state.on.bbs ) {
-   c.state.on.bbs(message,c.state.bbs);
+   c.state.on.bbs(message.body,c.state.bbs);
   }
  };
 
  // Platform BTC price. Used for client pricing data.
  this.receiveSetBTCPrice = function(message) {
+  c.state.btcprice = message.body;
   if ( c.state.on.btcprice ) {
    c.state.on.btcprice(message.body);
   }
@@ -589,16 +612,15 @@ function QSNClient(conf) {
  };
 
  // Change Replies 
- this.receiveChangeReply = function(reply) {
-  if ( reply.ok === true ) {
-   c.logger("receiveChangeReply: change " + reply.type + " accepted.");
-   return;
+ this.receiveChangeReply = function(message) {
+  var m = message.body;
+  if ( m.ok === true ) {
+   c.logger("receiveChangeReply: change " + m.type + " accepted.");
   } else {
-   c.logerr("receiveChangeReply: change " + reply.type + " not permitted, reason: " + reply.reason + ".");
-   return;
+   c.logerr("receiveChangeReply: change " + m.type + " not permitted, reason: " + m.reason + ".");
   }
   if ( c.state.on.changereply ) {
-   c.state.on.changereply(reply);
+   c.state.on.changereply(m);
   }
  };
 
