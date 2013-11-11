@@ -8,7 +8,6 @@ function QSNClient(conf) {
   conf: {},
   instrs: {},
   data: {},
-  logs: [],
   bbs: [],
   onload: {},
   onboot: null,
@@ -24,7 +23,8 @@ function QSNClient(conf) {
    conn: false,
    auth: false,
    upstream: false,
-   subscriber: false,
+			subscriber: false,
+   sysnotice: null,
    connects: 0,
    input: 0,
    output: 0,
@@ -80,10 +80,6 @@ function QSNClient(conf) {
   return(c.state.bbs);
  };
 
- this.getLogs = function() {
-  return(c.state.logs);
- };
-
  if ( c.conf.on ) {
   c.state.on = c.conf.on;
  }
@@ -104,7 +100,7 @@ function QSNClient(conf) {
  };
 
  this.receiveUpstream = function(msg) {
-  if ( msg && msg.body ) {
+  if ( msg ) {
    c.state.status.upstream = msg.body;
    if ( c.state.on.upstream ) {
     c.state.on.upstream(msg.body);
@@ -117,17 +113,10 @@ function QSNClient(conf) {
    c.logerr(['connect_persist: callback required']);
    return;
   } else {
-   if ( c.conf.username || c.conf.apikey ) {
-    c.state.onboot = function() {
-     delete(c.state.onboot);
-     cb();
-    };
-   } else {
-    c.state.onopen = function() {
-     delete(c.state.onopen);
-     cb();
-    };
-   }
+   c.state.onboot = function(m) {
+    delete(c.state.onboot);
+    cb(m);
+   };
   }
   c.state.status.persistent = true;
   c.state.ondown = function(err) {
@@ -343,11 +332,12 @@ function QSNClient(conf) {
   var instr = message.body;
   var key = instr.type + instr.name;
   c.state.status.subscriber = true;
+  if ( instr.hours.dateminute && instr.hours.dateminute.length > 0 ) {
+   c.parseInstr(instr);
+  }
   if ( instr.refresh && ! c.conf.noseconds ) {
    instr.secintid = setInterval(function() {
-    if ( c.state.status.auth ) {
-     c.updateInstrSec(instr);
-    }
+    c.updateInstrSec(instr);
    }, 1000);
   }
   c.state.data[instr.type][instr.name] = instr;
@@ -364,12 +354,12 @@ function QSNClient(conf) {
  };
 
  this.receiveSysNotice = function(m) {
-  if ( m && m.body && m.body.value ) {
-   c.state.sysnotice = m.body.value;
+  if ( m && m.body ) {
+   c.state.status.sysnotice = m.body;
    if ( c.state.on.sysnotice ) {
-    c.state.on.sysnotice(m.body);
+    c.state.on.sysnotice(c.state.status.sysnotice);
    } else {
-    c.logger(['receiveSysNotice:',m.body.value]);
+    c.logger(['receiveSysNotice:',c.state.status.sysnotice]);
    }
   }
  };
@@ -377,10 +367,13 @@ function QSNClient(conf) {
  this.receiveBoot = function(message) {
   var m = message.body;
   c.state.recondelay = 10;
-  if ( m.messages ) {
-   c.state.bbs = m.messages;
+  if ( m.bbs ) {
+   c.state.bbs = m.bbs;
   }
   c.state.instrs = m.instrs;
+  if ( m.privinstrs ) {
+   c.state.privinstrs = m.privinstrs;
+  }
   c.state.countries = m.countries;
   Object.keys(c.state.instrs).forEach(function(type) {
    if ( ! c.state.data[type] ) {
@@ -393,7 +386,7 @@ function QSNClient(conf) {
   c.state.btcprice = m.btcprice;
   c.state.serviceprice = m.serviceprice;
   if ( m.sysnotice ) {
-   c.receiveSysNotice({ body: { value: m.sysnotice.value } });
+   c.receiveSysNotice({ body: m.sysnotice });
   }
   if ( c.state.status.booted === true ) {
    Object.keys(c.state.data).forEach(function(type) {
@@ -404,7 +397,7 @@ function QSNClient(conf) {
    });
   } else {
    if ( c.state.onboot ) {
-    c.state.onboot();
+    c.state.onboot(m);
    }
   }
   if ( c.state.on.boot ) {
@@ -477,6 +470,36 @@ function QSNClient(conf) {
   }
   return(true);
  };
+ this.parseInstr = function(instr) {
+  var loc = [ 'hours', 'minutes', 'seconds' ];
+  var ta = c.state.conf.datafields[instr.type];
+  var i, data, arr, size, pf;
+  loc.forEach(function(l) {
+   data = instr[l];
+   size = data.dateminute.length;
+   ta.forEach(function(t) {
+    if ( data[t.name] ) {
+     arr = data[t.name];
+     if ( t.type === 'int' ) {
+      pf = function(v) {
+       return(parseInt(v, 10));
+      };
+     } else if ( t.type === 'float' ) {
+      pf = function(v) {
+       return(parseFloat(v));
+      };
+     } else {
+      pf = function(v) {
+       return(v);
+      };
+     }
+     for ( i=0; i<size; i++ ) {
+      arr[i] = pf(arr[i]);
+     }
+    }
+   });
+  });
+ };
  this.updateInstrData = function(instr,data) {
   var minutes = instr.minutes;
   var hours = instr.hours;
@@ -487,7 +510,7 @@ function QSNClient(conf) {
   var cfl = c.matchValueAH(df, 'dateminute');
   var mx = c.matchValue(minutes.dateminute,min[cfl]);
   var d = new Date();
-  var fo, fld, i, mlen, hlen, lmin, hx;
+  var fo, fld, i, mlen, hlen, hx;
   instr.laste = d.getTime();
   if ( mx ) {
    for ( i=0; i<dfl; i++ ) {
@@ -514,16 +537,17 @@ function QSNClient(conf) {
    instr.dclose = minutes.diverg[mx];
   }
   hlen = hours.datehour.length - 1;
-  hx = c.matchValue(hours.datehour,minutes.datehour[lmin]);
+  mlen = minutes.dateminute.length - 1;
+  hx = c.matchValue(hours.datehour,minutes.datehour[mlen]);
   if ( hx ) {
    for ( i=0; i<dfl; i++ ) {
     fo = df[i];
-    hours[fo.name][hx] = minutes[fo.name][lmin];
+    hours[fo.name][hx] = minutes[fo.name][mlen];
    }
   } else {
    for ( i=0; i<dfl; i++ ) {
     fo = df[i];
-    hours[fo.name].push(minutes[fo.name][lmin]);
+    hours[fo.name].push(minutes[fo.name][mlen]);
    }
   }
   if ( hlen > c.conf.cachehours ) {
@@ -540,9 +564,6 @@ function QSNClient(conf) {
   var name = m.name;
   var minfo = m.data;
   var instr;
-  if ( c.conf.debug ) {
-   c.logger(['receiveMinfo:',type,name]);
-  }
   if ( c.state.instrs[type][name] ) {
    instr = c.state.instrs[type][name];
    Object.keys(minfo).forEach(function(fld) {
@@ -557,6 +578,8 @@ function QSNClient(conf) {
   }
   if ( c.state.on.minfo ) {
    c.state.on.minfo(m);
+  } else if ( c.conf.debug ) {
+   c.logger(['receiveMinfo:',type,name]);
   }
  };
 
@@ -571,7 +594,7 @@ function QSNClient(conf) {
    return;
   }
   var msg = {
-   type: 'usermessage',
+   type: 'bbs',
    body: {
     message: m
    }
@@ -588,8 +611,8 @@ function QSNClient(conf) {
   }
  };
 
- // Platform BTC price. Used for client pricing data.
- this.receiveSetBTCPrice = function(message) {
+ // Platform BTC price. Used for subscription pricing.
+ this.receiveBTCPrice = function(message) {
   c.state.btcprice = message.body;
   if ( c.state.on.btcprice ) {
    c.state.on.btcprice(message.body);
@@ -609,6 +632,9 @@ function QSNClient(conf) {
   c.state.status.rtt = t - message.body.time;
   c.state.status.pingattempt = 0;
   c.state.status.pingreply = t;
+  if ( c.state.on.rtt ) {
+   c.state.on.rtt(c.state.status.rtt);
+  }
  };
 
  // Change Replies 
@@ -645,7 +671,7 @@ function QSNClient(conf) {
     c.receiveInstr(message);
     return;
    break;
-   case "usermessage":
+   case "bbs":
     c.receiveBBS(message);
     return;
    break;
@@ -685,7 +711,7 @@ function QSNClient(conf) {
     c.receiveUnSubscribe(message);
     return;
    break;
-   case "setsysnotice":
+   case "sysnotice":
     c.receiveSysNotice(message);
     return;
    break;
@@ -693,8 +719,8 @@ function QSNClient(conf) {
     c.receiveUpstream(message);
     return;
    break;
-   case "setbtcprice":
-    c.receiveSetBTCPrice(message);
+   case "btcprice":
+    c.receiveBTCPrice(message);
     return;
    break;
    case "log":
@@ -936,6 +962,5 @@ function QSNClient(conf) {
   });
   return found;
  };
- 
  return(c);
 }
