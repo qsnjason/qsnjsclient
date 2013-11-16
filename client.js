@@ -1,6 +1,6 @@
 /*jshint globalstrict: true*/
 /*jshint browser: true*/
-/* License
+/*!
 This software is distributed under the MIT License.
 
 The MIT License (MIT)
