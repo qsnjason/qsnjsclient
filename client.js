@@ -235,10 +235,9 @@ function QSNClient(conf) {
  };
 
  this.receiveError = function(message) {
+  c.logerr(['receiveError: QSN error message', message.error]);
   if ( c.state.on.error ) {
    c.state.on.error(message.error);
-  } else {
-   c.logerr(['receiveError: QSN error message', message.error]);
   }
  };
 
@@ -870,20 +869,12 @@ function QSNClient(conf) {
    type: "ping",
    time: t
   };
-  if ( c.state.status.pingattempt > 1 ) {
-   c.state.status.pingattempt++;
-   c.sendMessage(msg);
-   if ( c.state.status.pingattempt > 10 ) {
-    c.logger("sendPing: last reply " + c.epochToDateTimeStr(c.state.status.pingreply) + ' UTC');
-    c.socketDown();
-    c.state.status.pingattempt = 0;
-   }
-   return;
-  } else {
-   c.state.status.pingattempt++;
-   c.sendMessage(msg);
-   return;
+  if ( c.state.status.pingattempt === 10 ) {
+   c.logger("sendPing: last reply " + c.epochToDateTimeStr(c.state.status.pingreply) + ' UTC');
   }
+  c.state.status.pingattempt++;
+  c.sendMessage(msg);
+  return;
  };
 
  // Parse inbound JSON safely
