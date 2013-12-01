@@ -1,7 +1,9 @@
 qsnjsclient
 ===
 
-The QSN Javascript Client implements the QSN websocket messaging API. Client methods provide access to model data, BBS messaging, and platform notifications. This client exposes an event model with internal caching, providing realtime access to the QSN platform within HTML5 browsers.
+Javascript QSN API client by Quantitative Signals Network. https://www.quantsig.net
+
+This client implements the QSN websocket messaging API. Access to model data, BBS messaging, and platform notifications are provided. The client exposes an event model with internal caching, providing realtime access to the QSN platform within HTML5 browsers.
 
 This client requires the jsSHA library. https://github.com/Caligatio/jsSHA.git
 

@@ -1,6 +1,8 @@
 /*jshint globalstrict: true*/
 /*jshint browser: true*/
 /*!
+Javascript QSN API client by Quantitative Signals Network. https://www.quantsig.net
+
 Copyright (c) 2013 (Quantitative Signals Network) <support@quantsig.net>
 
 The MIT License (MIT)
