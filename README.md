@@ -143,9 +143,9 @@ An object containing all available models along with their current stats will be
 Subscribe
 ---
 
-A subscription request must have a minimum of `type` and `name` specified. The `onload` event will emit only once, when the model has been loaded. The `onquote` event will emit for every quote received on that model. The `onload` and `onquote` callbacks provided here will override global `load` and `quote` events.
+A subscription request must have a minimum of `type` and `name` specified. The `onload` event will emit only once, when the model has been loaded. The `onquote` event will emit for every quote received on that model. Any `onload` or `onquote` handlers provided will override global `load` and `quote` handlers.
 
-	var subto = {
+	qsn.subscribe({
 		type: 'net',
 		name: 'fx_gbpusd_a',
 		onload: function(instr) {
@@ -154,8 +154,7 @@ A subscription request must have a minimum of `type` and `name` specified. The `
 		onquote: function(instr,quote) {
 			console.log('model quote for ' + instr.name + ' ' + quote.diverg);
 		}
-	};
-	qsn.subscribe(subto);
+	});
 
 Unsubscribe
 ---
@@ -163,8 +162,8 @@ Unsubscribe
 Unsubscribe will disable events and cleanly shutdown the model. Provide either the model object or an object containing the model `type` and `name` to be unsubscribed from.
 
 	qsn.unsubscribe(model, function(result) {
-  console.log('unsubscribed from model', model.name);
- });
+		console.log('unsubscribed from model', model.name);
+	});
 
 BBS Messaging
 ---
