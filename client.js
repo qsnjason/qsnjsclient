@@ -968,6 +968,6 @@ function QSNClient(conf) {
  return(c);
 }
 if ( typeof exports == 'undefined' ) {
- var exports = this['QSNClient'] = {};
+ var exports = {};
 }
 exports.QSNClient = QSNClient;
