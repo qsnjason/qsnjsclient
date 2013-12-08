@@ -967,3 +967,7 @@ function QSNClient(conf) {
  };
  return(c);
 }
+if ( typeof exports == 'undefined' ) {
+ var exports = this['QSNClient'] = {};
+}
+exports.QSNClient = QSNClient;
