@@ -1,7 +1,7 @@
 /*jshint globalstrict: true*/
 /*jshint browser: true*/
 /*!
-Javascript QSN API client by Quantitative Signals Network. https://www.quantsig.net
+QSN Javascript client by Quantitative Signals Network. https://www.quantsig.net
 
 Copyright (c) 2013 (Quantitative Signals Network) <support@quantsig.net>
 
@@ -41,7 +41,7 @@ function QSNClient(conf) {
   onquote: {},
   onunsub: {},
   on: {},
-  recondelay: 10,
+  recondelay: 5,
   status: {
    connecting: false,
    booted: false,
@@ -50,6 +50,7 @@ function QSNClient(conf) {
    upstream: false,
 			subscriber: false,
    sysnotice: null,
+   pingattempt: 0,
    connects: 0,
    input: 0,
    output: 0,
@@ -60,26 +61,11 @@ function QSNClient(conf) {
   }
  };
  c.name = 'qsn client';
-
- if ( conf ) {
-  c.conf = conf;
- } else {
-  c.conf = {};
- }
-
- if ( ! c.conf.gateway ) {
-  c.conf.gateway = 'eu.quantsig.net';
- }
-
- if ( ! c.conf.cachehours ) {
-  c.conf.cachehours = 750;
- }
- if ( ! c.conf.cacheminutes ) {
-  c.conf.cacheminutes = 1440;
- }
- if ( ! c.conf.cacheseconds ) {
-  c.conf.cacheseconds = 600;
- }
+ c.conf = conf || {};
+ c.conf.gateway = c.conf.gateway || 'eu.quantsig.net';
+ c.conf.cachehours = c.conf.cachehours || 750;
+ c.conf.cacheminutes = c.conf.cacheminutes || 1440;
+ c.conf.cacheseconds = c.conf.cacheseconds || 600;
 
  this.getConf = function() {
   return(c.state.conf);
@@ -117,7 +103,11 @@ function QSNClient(conf) {
   var str;
   if ( c.state.socket && c.state.status.conn === true ) {
    str = JSON.stringify(msg);
-   c.state.socket.send(str);
+   try {
+    c.state.socket.send(str);
+   } catch(er) {
+    c.logerr(['sendMessage: error, cannot send message',JSON.stringify(er)]);
+   }
    c.state.status.output++;
   } else {
    c.logerr('sendMessage: error, not connected');
@@ -147,8 +137,8 @@ function QSNClient(conf) {
   c.state.ondown = function(err) {
    c.state.socket = null;
    setTimeout(function() {
-    if ( c.state.recondelay < 300 ) {
-     c.state.recondelay = 10 + c.state.recondelay;
+    if ( c.state.recondelay < 60 ) {
+     c.state.recondelay = 5 + c.state.recondelay;
     }
     c.connect(function() {
       c.startConn();
@@ -297,7 +287,7 @@ function QSNClient(conf) {
 
  this.unsubscribe = function(instr,cb) {
   if ( ! instr ) {
-   c.logerr(['unsubscribe: no instrument']);
+   c.logerr('unsubscribe: no instrument to unsubscribe from');
    return;
   }
   var type = instr.type;
@@ -610,11 +600,11 @@ function QSNClient(conf) {
  // BBS Messaging
  this.sendBBS = function(m) {
   if ( c.state.status.auth !== true ) {
-   c.logerr('sendBBS: must be logged in.');
+   c.logerr('sendBBS: must be logged in');
    return false;
   }
   if (m===null || m==="") {
-   c.logerr('sendBBS: no message submitted.');
+   c.logerr('sendBBS: no message submitted');
    return;
   }
   var msg = {
@@ -665,9 +655,9 @@ function QSNClient(conf) {
  this.receiveChangeReply = function(message) {
   var m = message.body;
   if ( m.ok === true ) {
-   c.logger("receiveChangeReply: change " + m.type + " accepted.");
+   c.logger("receiveChangeReply: change " + m.type + " accepted");
   } else {
-   c.logerr("receiveChangeReply: change " + m.type + " not permitted, reason: " + m.reason + ".");
+   c.logerr("receiveChangeReply: change " + m.type + " not permitted, reason: " + m.reason);
   }
   if ( c.state.on.changereply ) {
    c.state.on.changereply(m);
@@ -843,7 +833,7 @@ function QSNClient(conf) {
  };
 
  //
- // Utility functions below
+ // Utility functions
  //
 
  // Token creation
@@ -863,20 +853,17 @@ function QSNClient(conf) {
   if ( c.state.status.conn === false ) {
    return;
   }
-  if ( ! c.state.status.pingattempt ) {
-   c.state.status.pingattempt = 0;
-  }
   var t = new Date().getTime();
   var msg = {
    type: "ping",
    time: t
   };
+  c.state.status.pingattempt++;
   if ( c.state.status.pingattempt === 10 ) {
    c.logger("sendPing: last reply " + c.epochToDateTimeStr(c.state.status.pingreply) + ' UTC');
+  } else {
+   c.sendMessage(msg);
   }
-  c.state.status.pingattempt++;
-  c.sendMessage(msg);
-  return;
  };
 
  // Parse inbound JSON safely
