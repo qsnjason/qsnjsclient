@@ -48,7 +48,7 @@ function QSNClient(conf) {
    conn: false,
    auth: false,
    upstream: false,
-			subscriber: false,
+   subscriber: false,
    sysnotice: null,
    pingattempt: 0,
    connects: 0,
@@ -107,6 +107,7 @@ function QSNClient(conf) {
     c.state.socket.send(str);
    } catch(er) {
     c.logerr(['sendMessage: error, cannot send message',JSON.stringify(er)]);
+    c.socketClose();
    }
    c.state.status.output++;
   } else {
@@ -194,10 +195,12 @@ function QSNClient(conf) {
    }
   };
   socket.onclose = function() {
-   c.logger('connect: socket closed');
-   c.socketDown('close');
-   if ( c.state.on.close ) {
-    c.state.on.close();
+   if ( c.socketDown ) {
+    c.logger('connect: socket closed');
+    c.socketDown('close');
+    if ( c.state.on.close ) {
+     c.state.on.close();
+    }
    }
   };
   socket.onerror = function(err) {
@@ -208,21 +211,33 @@ function QSNClient(conf) {
   };
   c.state.status.connects++;
   c.state.socket = socket;
+
+  c.socketDown = function(src) {
+   c.state.status.conn = false;
+   c.state.status.auth = false;
+   c.state.status.upstream = false;
+   c.state.status.connecting = false;
+   clearInterval(c.state.pinginterval);
+   delete(c.state.pinginterval);
+   delete(c.state.socket);
+   if ( c.state.on.down ) {
+    c.state.on.down(src);
+   }
+   if ( c.state.ondown ) {
+    c.state.ondown(src);
+   }
+   delete(c.socketDown);
+  };
  };
 
- this.socketDown = function(src) {
+ this.socketClose = function() {
   c.state.status.conn = false;
-  c.state.status.auth = false;
-  c.state.status.upstream = false;
-  c.state.status.connecting = false;
-  clearInterval(c.state.pinginterval);
-  delete(c.state.pinginterval);
-  delete(c.state.socket);
-  if ( c.state.on.down ) {
-   c.state.on.down(src);
-  }
-  if ( c.state.ondown ) {
-   c.state.ondown(src);
+  if ( c.state.socket ) {
+   try {
+    c.state.socket.close();
+   } catch(er) {
+    c.logger('socket close error');
+   }
   }
  };
 
@@ -861,6 +876,8 @@ function QSNClient(conf) {
   c.state.status.pingattempt++;
   if ( c.state.status.pingattempt === 10 ) {
    c.logger("sendPing: last reply " + c.epochToDateTimeStr(c.state.status.pingreply) + ' UTC');
+   c.state.status.pingattempt = 0;
+   c.socketClose();
   } else {
    c.sendMessage(msg);
   }
