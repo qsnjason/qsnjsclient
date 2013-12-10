@@ -1,13 +1,19 @@
 qsnjsclient
 ===
 
-Javascript QSN API client by Quantitative Signals Network. https://www.quantsig.net
+QSN Javascript Websocket Client for Node.js and HTML5 Browsers.
 
-This client implements the QSN websocket messaging API. Access to model data, BBS messaging, and platform notifications are provided. The client exposes an event model with internal caching, providing realtime access to the QSN platform within HTML5 browsers.
+This client implements the QSN Websocket Messaging API. Access to model data, BBS messaging, and platform notifications are provided. The client exposes an event model with internal caching, providing realtime access to the QSN platform.
 
-This client requires the jsSHA library. https://github.com/Caligatio/jsSHA.git
+Browser client requires the jsSHA library. https://github.com/Caligatio/jsSHA
 
-Client Configuration
+Node.js client requires the Minode library. https://github.com/billywhizz/minode
+
+Copyright (c) 2013 Quantitative Signals Network. https://www.quantsig.net
+
+Distributed under the terms of the MIT license (below).
+
+Standard and Browser Configuration
 ---
 
 The default QSN gateway is Europe (eu.quantsig.net). Also available are 'am.quantsig.net' (Americas) and 'as.quantsig.net' (Asia).
@@ -39,6 +45,23 @@ The client will maintain a cache of model seconds data by default. This can be d
 Debug mode may be specified to increase logging verbosity.
 
 	config.debug = true;
+
+Node.js Configuration
+---
+
+Clone Minode. It provides a fast and compatible Websocket implementation within Node.js.
+
+ git clone https://github.com/billywhizz/minode.git
+
+Specify Minode library location. It will be auto-required by the client.
+
+	config.minode = "./minode";
+
+Load QSNClient library.
+
+	var QSNClient = require("./client").QSNClient;
+
+See `example/node.js` for an example node.js client.
 
 Client Management
 ---
@@ -215,6 +238,8 @@ License
 
 Copyright (c) 2013 (Quantitative Signals Network) <support@quantsig.net>
 
+The MIT License (MIT)
+
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -232,5 +257,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
-
-

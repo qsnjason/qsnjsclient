@@ -1,11 +1,10 @@
 /*jshint globalstrict: true*/
 /*jshint browser: true*/
 /*!
-QSN Javascript client by Quantitative Signals Network. https://www.quantsig.net
+QSN Javascript Websocket client for Node.js and HTML5 Browsers
 
-Copyright (c) 2013 (Quantitative Signals Network) <support@quantsig.net>
-
-The MIT License (MIT)
+Copyright (c) 2013 Quantitative Signals Network. https://www.quantsig.net
+Distributed under the terms of The MIT License (MIT)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -28,6 +27,12 @@ THE SOFTWARE.
 "use strict";
 function QSNClient(conf) {
  var c = this;
+ c.name = 'qsn client';
+ c.conf = conf || {};
+ c.conf.gateway = c.conf.gateway || 'eu.quantsig.net';
+ c.conf.cachehours = c.conf.cachehours || 750;
+ c.conf.cacheminutes = c.conf.cacheminutes || 1440;
+ c.conf.cacheseconds = c.conf.cacheseconds || 600;
  c.state = {
   account: {},
   conf: {},
@@ -60,12 +65,11 @@ function QSNClient(conf) {
    load: 0
   }
  };
- c.name = 'qsn client';
- c.conf = conf || {};
- c.conf.gateway = c.conf.gateway || 'eu.quantsig.net';
- c.conf.cachehours = c.conf.cachehours || 750;
- c.conf.cacheminutes = c.conf.cacheminutes || 1440;
- c.conf.cacheseconds = c.conf.cacheseconds || 600;
+
+ if ( c.conf.minode ) {
+  c.crypto = require('crypto');
+  require(c.conf.minode).websocket;
+ }
 
  this.getConf = function() {
   return(c.state.conf);
@@ -100,18 +104,20 @@ function QSNClient(conf) {
  };
 
  this.sendMessage = function(msg) {
-  var str;
-  if ( c.state.socket && c.state.status.conn === true ) {
-   str = JSON.stringify(msg);
-   try {
-    c.state.socket.send(str);
-   } catch(er) {
-    c.logerr(['sendMessage: error, cannot send message',JSON.stringify(er)]);
-    c.socketClose();
+  if ( msg ) {
+   if ( c.state.socket && c.state.status.conn === true ) {
+    try {
+     c.state.socket.send(JSON.stringify(msg));
+    } catch(er) {
+     c.logerr(['sendMessage: error, cannot send message',JSON.stringify(er)]);
+     c.socketClose();
+    }
+    c.state.status.output++;
+   } else {
+    c.logerr('sendMessage: error, not connected');
    }
-   c.state.status.output++;
   } else {
-   c.logerr('sendMessage: error, not connected');
+   c.logerr('sendMessage: error, null message');
   }
  };
 
@@ -387,7 +393,7 @@ function QSNClient(conf) {
    c.state.status.sysnotice = m.body;
    if ( c.state.on.sysnotice ) {
     c.state.on.sysnotice(c.state.status.sysnotice);
-   } else {
+   } else if ( c.conf.debug ) {
     c.logger(['receiveSysNotice:',c.state.status.sysnotice]);
    }
   }
@@ -683,85 +689,87 @@ function QSNClient(conf) {
  this.messageSwitch = function(msg) {
   var message = c.parseJSON(msg.data);
   c.state.status.input++;
-  switch(message.type) {
-   case "quote":
-    c.receiveQuote(message);
-    return;
-   break;
-   case "pong":
-    c.receivePong(message);
-    return;
-   break;
-   case "boot":
-    c.receiveBoot(message);
-    return;
-   break;
-   case "load":
-    c.receiveInstr(message);
-    return;
-   break;
-   case "bbs":
-    c.receiveBBS(message);
-    return;
-   break;
-   case "minfo":
-    c.receiveMinfo(message);
-    return;
-   break;
-   case "res":
-    c.receiveResume(message);
-    return;
-   break;
-   case "changereply":
-    c.receiveChangeReply(message);
-    return;
-   break;
-   case "login":
-    c.receiveLogin(message);
-    return;
-   break;
-   case "account":
-    c.receiveAccount(message);
-    return;
-   break;
-   case "apikey":
-    c.receiveApiKey(message);
-    return;
-   break;
-   case "error":
-    c.receiveError(message);
-    return;
-   break;
-   case "sub":
-    c.receiveSubscribe(message);
-    return;
-   break;
-   case "unsub":
-    c.receiveUnSubscribe(message);
-    return;
-   break;
-   case "sysnotice":
-    c.receiveSysNotice(message);
-    return;
-   break;
-   case "upstream":
-    c.receiveUpstream(message);
-    return;
-   break;
-   case "btcprice":
-    c.receiveBTCPrice(message);
-    return;
-   break;
-   case "log":
-    c.receiveLog(message);
-    return;
-   break;
-   default:
-    if ( c.state.on.umessage ) {
-     c.state.on.umessage(message);
-    }
-    return;
-   break;
+  if ( message ) {
+   switch(message.type) {
+    case "quote":
+     c.receiveQuote(message);
+     return;
+    break;
+    case "pong":
+     c.receivePong(message);
+     return;
+    break;
+    case "boot":
+     c.receiveBoot(message);
+     return;
+    break;
+    case "load":
+     c.receiveInstr(message);
+     return;
+    break;
+    case "bbs":
+     c.receiveBBS(message);
+     return;
+    break;
+    case "minfo":
+     c.receiveMinfo(message);
+     return;
+    break;
+    case "res":
+     c.receiveResume(message);
+     return;
+    break;
+    case "changereply":
+     c.receiveChangeReply(message);
+     return;
+    break;
+    case "login":
+     c.receiveLogin(message);
+     return;
+    break;
+    case "account":
+     c.receiveAccount(message);
+     return;
+    break;
+    case "apikey":
+     c.receiveApiKey(message);
+     return;
+    break;
+    case "error":
+     c.receiveError(message);
+     return;
+    break;
+    case "sub":
+     c.receiveSubscribe(message);
+     return;
+    break;
+    case "unsub":
+     c.receiveUnSubscribe(message);
+     return;
+    break;
+    case "sysnotice":
+     c.receiveSysNotice(message);
+     return;
+    break;
+    case "upstream":
+     c.receiveUpstream(message);
+     return;
+    break;
+    case "btcprice":
+     c.receiveBTCPrice(message);
+     return;
+    break;
+    case "log":
+     c.receiveLog(message);
+     return;
+    break;
+    default:
+     if ( c.state.on.umessage ) {
+      c.state.on.umessage(message);
+     }
+     return;
+    break;
+   }
   }
  };
 
@@ -890,16 +898,23 @@ function QSNClient(conf) {
    m = JSON.parse(str);
    return(m);
   } catch (er) {
-   console.trace();
    c.logerr(['parseJSON: failed to parse', str]);
   }
  };
 
  // Hasher required for login
- this.hasher256 = function(string) {
-  var sha = new jsSHA(string, 'TEXT');
-  return(sha.getHash('SHA-256','HEX'));
- };
+ if ( c.conf.minode ) {
+  this.hasher256 = function(string) {
+   var hasher = c.crypto.createHash('sha256');
+   var hash = hasher.update(string, 'utf8');
+   return(hash.digest('hex'));
+  };
+ } else {
+  this.hasher256 = function(string) {
+   var sha = new jsSHA(string, 'TEXT');
+   return(sha.getHash('SHA-256','HEX'));
+  };
+ }
 
  // Time formatter
  this.epochToDateTimeStr = function(e) {
