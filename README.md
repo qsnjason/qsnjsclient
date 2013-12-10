@@ -51,7 +51,7 @@ Node.js Configuration
 
 Clone Minode. It provides a fast and compatible Websocket implementation within Node.js.
 
- git clone https://github.com/billywhizz/minode.git
+	git clone https://github.com/billywhizz/minode.git
 
 Specify Minode library location. It will be auto-required by the client.
 
