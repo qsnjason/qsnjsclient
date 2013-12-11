@@ -1,4 +1,6 @@
-var QSNClient = require("../client").QSNClient;
+var QSNClient, qsn;
+
+QSNClient = require("../client").QSNClient;
 
 // Prepare config
 var config = {
@@ -30,7 +32,7 @@ var config = {
 };
 
 // Instance.
-var qsn = new QSNClient(config);
+qsn = new QSNClient(config);
 
 function connect() {
  qsn.connect_persist(function() {
