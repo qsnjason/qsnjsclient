@@ -1,28 +1,12 @@
 /*jshint globalstrict: true*/
 /*jshint browser: true*/
-/*!
+/**@preserve
 QSN Javascript Websocket client for Node.js and HTML5 Browsers
 
-Copyright (c) 2013 Quantitative Signals Network. https://www.quantsig.net
-Distributed under the terms of The MIT License (MIT)
+Copyright (c) 2013 Quantitative Signals Network (https://www.quantsig.net).
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Distributed under the terms of the MIT License (http://opensource.org/licenses/MIT).
 
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
 */
 "use strict";
 function QSNClient(conf) {
@@ -73,6 +57,10 @@ function QSNClient(conf) {
 
  this.getConf = function() {
   return(c.state.conf);
+ };
+
+ this.getState = function() {
+  return(c.state.status);
  };
 
  this.getStatus = function() {
@@ -184,12 +172,12 @@ function QSNClient(conf) {
   }
   c.state.status.connecting = true;
   if ( c.conf.gateway.match(/wss/) ) {
-   socket = new WebSocket(c.conf.gateway + '/quote');
+   c.state.socket = new WebSocket(c.conf.gateway + '/quote');
   } else {
-   socket = new WebSocket('wss://' + c.conf.gateway + '/quote');
+   c.state.socket = new WebSocket('wss://' + c.conf.gateway + '/quote');
   }
-  socket.onmessage = c.messageSwitch;
-  socket.onopen = function(event) {
+  c.state.socket.onmessage = c.messageSwitch;
+  c.state.socket.onopen = function(event) {
    c.logger('connect: connected');
    c.state.status.conn = true;
    c.state.status.connecting = false;
@@ -200,30 +188,36 @@ function QSNClient(conf) {
     c.state.on.open();
    }
   };
-  socket.onclose = function() {
-   if ( c.socketDown ) {
+  c.state.socket.onclose = function() {
+   if ( c.state.socket.cleanup ) {
     c.logger('connect: socket closed');
-    c.socketDown('close');
+    c.state.socket.cleanup('close');
     if ( c.state.on.close ) {
      c.state.on.close();
     }
    }
   };
-  socket.onerror = function(err) {
-   c.logger('connect: socket error');
-   if ( c.state.on.error ) {
-    c.state.on.error(err);
+  c.state.socket.onerror = function(err) {
+   if ( c.state.socket.cleanup ) {
+    c.logger('connect: socket error');
+    c.state.socket.cleanup('error');
+    if ( c.state.on.error ) {
+     c.state.on.error(err);
+    }
    }
   };
   c.state.status.connects++;
-  c.state.socket = socket;
 
-  c.socketDown = function(src) {
+  c.state.socket.cleanup = function(src) {
    c.state.status.conn = false;
    c.state.status.auth = false;
    c.state.status.upstream = false;
    c.state.status.connecting = false;
    clearInterval(c.state.pinginterval);
+   if ( c.state.status.conntimeout ) {
+    clearTimeout(c.state.status.conntimeout);
+    delete(c.state.status.conntimeout);
+   }
    delete(c.state.pinginterval);
    delete(c.state.socket);
    if ( c.state.on.down ) {
@@ -232,8 +226,18 @@ function QSNClient(conf) {
    if ( c.state.ondown ) {
     c.state.ondown(src);
    }
-   delete(c.socketDown);
+   if ( c.state.socket && c.state.socket.cleanup ) {
+    delete(c.state.socket.cleanup);
+   }
   };
+
+  c.state.status.conntimeout = setTimeout(function() {
+   if ( c.state.status.connecting === true ) {
+    c.state.socket.cleanup('timeout');
+   } else {
+    delete(c.state.status.conntimeout);
+   }
+  }, 30000);
  };
 
  this.socketClose = function() {
@@ -899,6 +903,9 @@ function QSNClient(conf) {
    return(m);
   } catch (er) {
    c.logerr(['parseJSON: failed to parse', str]);
+   if ( c.state.socket ) {
+    c.state.socket.close();
+   }
   }
  };
 
@@ -918,16 +925,18 @@ function QSNClient(conf) {
 
  // Time formatter
  this.epochToDateTimeStr = function(e) {
-  var ct = new Date();
+  var dt, ct = new Date();
   ct.setTime(e);
-  var dt = {};
-  dt.year = ct.getUTCFullYear();
-  dt.month = ct.getUTCMonth();
-  dt.day = ct.getUTCDate();
-  dt.hour = ct.getUTCHours();
-  dt.minute = ct.getUTCMinutes();
-  dt.second = ct.getSeconds();
+  dt = {
+   year: ct.getUTCFullYear(),
+   month: ct.getUTCMonth(),
+   day: ct.getUTCDate(),
+   hour: ct.getUTCHours(),
+   minute: ct.getUTCMinutes(),
+   second: ct.getSeconds()
+  };
   dt.month++;
+
   if(dt.month <10) {
    dt.month = "0" + dt.month;
   }
